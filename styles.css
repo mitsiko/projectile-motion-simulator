@@ -1,0 +1,116 @@
+ /* Main layout styles */
+ body {
+    font-family: "montserrat";
+    margin: 0px;
+    background-color: #e7ddd0;
+}
+
+h2{
+    font-size: 1.2rem;
+}
+
+p{
+    font-size: 0.8rem;
+}
+
+.title {
+    display: flex;
+    justify-content: flex-end;
+    margin-top: 4rem;
+    padding-right: 18rem;
+    padding-top: 0rem;
+    padding-bottom: 0rem;
+    width: 100vp;
+    height: 20vh;
+    font-size: 1rem;
+    font-family: "press start 2p";
+    text-align: left;
+    background: linear-gradient(to bottom,#2a2e31, #856b9e, #e87651, #fdbb59);
+    color:#e7ddd0;
+    align-items: center;
+}
+
+.landing-page{
+    display: flex;
+    flex-direction: row;
+    margin: 0.5rem 6rem;
+}
+
+.right-section{
+    flex-direction: column;
+    margin-left: 4rem;
+    color: #392d43;
+    margin-right: 12rem;
+}
+
+.right-section p{
+    text-align: justify;
+}
+
+.left-section img{
+    width: 25vw;
+    height: auto;
+    margin-top: -10.3rem;
+}
+
+/* Styles for input fields and labels */
+.input-section{
+    display:flex;
+    flex-direction: column;
+    padding-right: 5rem;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: 0.8rem;
+    justify-content: space-between;
+}
+
+.input-group input {
+    margin-top: 5px;
+    padding: 5px;
+    width: 200px;
+    border: 1px solid #392d43;
+    background-color: #e7ddd0;
+    align-self: center;
+}
+/* Canvas container styles */
+.canvas-container {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+    border-top: 2px solid #866b9e;
+}
+canvas {
+    background-color: #e7ddd0;
+    max-width: 1216px;  
+}
+/* Button styles */
+button {
+    margin: 0.8rem 4rem;
+    padding: 0.7rem 1.25rem;
+    background-color: #866b9e;
+    color: #e7ddd0;
+    border: none;
+    cursor: pointer;
+    font-family: "press start 2p";
+}
+button:hover {
+    background-color: #eb8152;
+}
+/* Error message styles */
+#error-message {
+    display: flex;
+    color: red;
+    justify-content: center;
+    font-size: 0.8rem;
+}
+
+#footer{
+    background-color: #866b9e;
+    text-align: center;
+    padding: 0.1rem;
+    color:#e7ddd0;
+}
