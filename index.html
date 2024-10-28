@@ -26,11 +26,11 @@
                 <div class="input-section">
                     <div class="input-group">
                         <label for="velocity"><b>Initial Velocity (m/s):</b></label>
-                        <input type="number" id="velocity" value="20" step="1" min="0" max="30">  <!-- Added max attribute -->
+                        <input type="number" id="velocity" step="1" min="0" max="30" placeholder="1 - 30 m/s">  <!-- Added max attribute -->
                     </div>
                     <div class="input-group">
                         <label for="angle"><b>Launch Angle (degrees):</b></label>
-                        <input type="number" id="angle" value="45" step="1" min="0" max="90">
+                        <input type="number" id="angle" step="1" min="0" max="90" placeholder="1 - 90°">
                     </div>
                     <button id="start-btn" py-click="start_simulation()">Start Simulation</button>
                     <div id="error-message"></div>
@@ -39,12 +39,11 @@
         </div>
     </div>
     <div class="canvas-container">
-        <canvas id="simulation-canvas" width="1216" height="530"></canvas>  <!-- Updated dimensions -->
+        <canvas id="simulation-canvas" width="1200" height="600"></canvas>  <!-- Updated dimensions -->
     </div>
     <div id="footer">
         <p>@ 2024 Lee Michiko Garcia. All rights reserved.</p>
     </div>
-</body>
     <script>
         const startButton = document.getElementById('start-btn');
         startButton.addEventListener('click', () => {
@@ -56,6 +55,7 @@
             if (velocity >= 0 && velocity <= 30 && angle >= 0 && angle <= 90) {
                 scrollToCanvas();
                 start_simulation();
+                clearInputFields();
             } else {
                 display_error('Please enter valid values for velocity and angle.');
             }
@@ -68,7 +68,15 @@
                 block: 'start',
             });
         }
+
+        function clearInputFields() {
+            const velocityInput = document.getElementById('velocity');
+            const angleInput = document.getElementById('angle');
+            velocityInput.value = '';
+            angleInput.value = '';
+        }
     </script>
+
     <py-script>
 import math
 from js import document, window, console
@@ -80,6 +88,8 @@ GRAVITY = 9.81        # Acceleration due to gravity in m/s²
 SCALE = 10           # Pixels per meter for display scaling
 MARGIN = 50          # Margin in pixels for rulers and padding
 MAX_VELOCITY = 30    # Maximum allowed initial velocity in m/s
+ANIMATION_DELAY = 0.7  # Delay in seconds before starting the animation
+
 animation_id = None  # Stores the current animation frame ID
 start_time = None    # Tracks the start time of the animation
 trajectory_points = []  # Stores points for drawing the trajectory path
@@ -114,7 +124,7 @@ def get_inputs():
         # Input validation
         if velocity < 0:
             raise ValueError("Velocity must be positive")
-        if velocity > MAX_VELOCITY:  # Added velocity limit check
+        if velocity > MAX_VELOCITY:
             raise ValueError(f"Oops! Your initial velocity is too high. Please enter a value of {MAX_VELOCITY} m/s or lower. This limit is in place to ensure the entire projectile motion is visible within the canvas.")
         if angle < 0 or angle > 90:
             raise ValueError("Angle must be between 0 and 90 degrees")
@@ -149,44 +159,48 @@ def draw_rulers(ctx, canvas):
         ctx: Canvas 2D context
         canvas: Canvas element
     """
-    # Draw vertical axis
-    ctx.beginPath()
-    ctx.moveTo(MARGIN, MARGIN)
-    ctx.lineTo(MARGIN, canvas.height - MARGIN)
-    ctx.stroke()
-    
-    # Draw horizontal axis
-    ctx.beginPath()
-    ctx.moveTo(MARGIN, canvas.height - MARGIN)
-    ctx.lineTo(canvas.width - MARGIN, canvas.height - MARGIN)
-    ctx.stroke()
-    
-    # Set text properties for labels
-    ctx.font = '12px Arial'
-    ctx.textAlign = 'right'
-    ctx.textBaseline = 'middle'
-    
-    # Draw vertical ruler markings and labels
-    height_meters = (canvas.height - 2 * MARGIN) / SCALE
-    for i in range(0, int(height_meters) + 1, 5):
-        y_pos = canvas.height - MARGIN - (i * SCALE)
+    try:
+        # Draw vertical axis
         ctx.beginPath()
-        ctx.moveTo(MARGIN - 5, y_pos)
-        ctx.lineTo(MARGIN, y_pos)
+        ctx.moveTo(MARGIN, MARGIN)
+        ctx.lineTo(MARGIN, canvas.height - MARGIN)
         ctx.stroke()
-        ctx.fillText(f"{i}m", MARGIN - 8, y_pos)
-    
-    # Draw horizontal ruler markings and labels
-    ctx.textAlign = 'center'
-    ctx.textBaseline = 'top'
-    width_meters = (canvas.width - 2 * MARGIN) / SCALE
-    for i in range(0, int(width_meters) + 1, 10):
-        x_pos = MARGIN + (i * SCALE)
+        
+        # Draw horizontal axis
         ctx.beginPath()
-        ctx.moveTo(x_pos, canvas.height - MARGIN)
-        ctx.lineTo(x_pos, canvas.height - MARGIN + 5)
+        ctx.moveTo(MARGIN, canvas.height - MARGIN)
+        ctx.lineTo(canvas.width - MARGIN, canvas.height - MARGIN)
         ctx.stroke()
-        ctx.fillText(f"{i}m", x_pos, canvas.height - MARGIN + 8)
+        
+        # Set text properties for labels
+        ctx.font = '12px Arial'
+        ctx.textAlign = 'right'
+        ctx.textBaseline = 'middle'
+        
+        # Draw vertical ruler markings and labels
+        height_meters = (canvas.height - 2 * MARGIN) / SCALE
+        for i in range(0, int(height_meters) + 1, 5):
+            y_pos = canvas.height - MARGIN - (i * SCALE)
+            ctx.beginPath()
+            ctx.moveTo(MARGIN - 5, y_pos)
+            ctx.lineTo(MARGIN, y_pos)
+            ctx.stroke()
+            ctx.fillText(f"{i}m", MARGIN - 8, y_pos)
+        
+        # Draw horizontal ruler markings and labels
+        ctx.textAlign = 'center'
+        ctx.textBaseline = 'top'
+        width_meters = (canvas.width - 2 * MARGIN) / SCALE
+        for i in range(0, int(width_meters) + 1, 10):
+            x_pos = MARGIN + (i * SCALE)
+            ctx.beginPath()
+            ctx.moveTo(x_pos, canvas.height - MARGIN)
+            ctx.lineTo(x_pos, canvas.height - MARGIN + 5)
+            ctx.stroke()
+            ctx.fillText(f"{i}m", x_pos, canvas.height - MARGIN + 8)
+    except Exception as e:
+        console.log(f"Error in draw_rulers: {str(e)}")
+        display_error(f"Error drawing rulers: {str(e)}")
 
 def draw_grid(ctx, canvas):
     """
@@ -196,44 +210,52 @@ def draw_grid(ctx, canvas):
         ctx: Canvas 2D context
         canvas: Canvas element
     """
-    ctx.strokeStyle = '#eb815299'
-    ctx.lineWidth = 0.5
-    
-    # Draw vertical grid lines
-    width_meters = (canvas.width - 2 * MARGIN) / SCALE
-    for i in range(0, int(width_meters) + 1, 5):
-        x_pos = MARGIN + (i * SCALE)
-        ctx.beginPath()
-        ctx.moveTo(x_pos, MARGIN)
-        ctx.lineTo(x_pos, canvas.height - MARGIN)
-        ctx.stroke()
-    
-    # Draw horizontal grid lines
-    height_meters = (canvas.height - 2 * MARGIN) / SCALE
-    for i in range(0, int(height_meters) + 1, 5):
-        y_pos = canvas.height - MARGIN - (i * SCALE)
-        ctx.beginPath()
-        ctx.moveTo(MARGIN, y_pos)
-        ctx.lineTo(canvas.width - MARGIN, y_pos)
-        ctx.stroke()
+    try:
+        ctx.strokeStyle = '#a49d9599'
+        ctx.lineWidth = 0.5
+        
+        # Draw vertical grid lines
+        width_meters = (canvas.width - 2 * MARGIN) / SCALE
+        for i in range(0, int(width_meters) + 1, 5):
+            x_pos = MARGIN + (i * SCALE)
+            ctx.beginPath()
+            ctx.moveTo(x_pos, MARGIN)
+            ctx.lineTo(x_pos, canvas.height - MARGIN)
+            ctx.stroke()
+        
+        # Draw horizontal grid lines
+        height_meters = (canvas.height - 2 * MARGIN) / SCALE
+        for i in range(0, int(height_meters) + 1, 5):
+            y_pos = canvas.height - MARGIN - (i * SCALE)
+            ctx.beginPath()
+            ctx.moveTo(MARGIN, y_pos)
+            ctx.lineTo(canvas.width - MARGIN, y_pos)
+            ctx.stroke()
+    except Exception as e:
+        console.log(f"Error in draw_grid: {str(e)}")
+        display_error(f"Error drawing grid: {str(e)}")
 
 def draw_trajectory():
     """Draw the path of the projectile using stored trajectory points."""
-    canvas = get_canvas()
-    ctx = canvas.getContext('2d')
-    
-    ctx.beginPath()
-    ctx.strokeStyle = '#6f598266'  # Semi-transparent purple
-    ctx.lineWidth = 2
-    
-    # Connect all trajectory points with a line
-    for i, point in enumerate(trajectory_points):
-        if i == 0:
-            ctx.moveTo(point[0] * SCALE + MARGIN, canvas.height - (point[1] * SCALE + MARGIN))
-        else:
-            ctx.lineTo(point[0] * SCALE + MARGIN, canvas.height - (point[1] * SCALE + MARGIN))
-    
-    ctx.stroke()
+    try:
+        canvas = get_canvas()
+        ctx = canvas.getContext('2d')
+        
+        ctx.beginPath()
+        ctx.strokeStyle = '#fdbb5999'  # Off-white
+        ctx.lineWidth = 2
+        
+        # Connect all trajectory points with a line
+        for i, point in enumerate(trajectory_points):
+            if i == 0:
+                ctx.moveTo(point[0] * SCALE + MARGIN, canvas.height - (point[1] * SCALE + MARGIN))
+            else:
+                ctx.lineTo(point[0] * SCALE + MARGIN, canvas.height - (point[1] * SCALE + MARGIN))
+        
+        ctx.stroke()
+    except Exception as e:
+        console.log(f"Error in draw_trajectory: {str(e)}")
+        display_error(f"Error drawing trajectory: {str(e)}")
 
 def draw_scene(x, y):
     """
@@ -252,7 +274,7 @@ def draw_scene(x, y):
         
         # Set line properties
         ctx.lineWidth = 1
-        ctx.strokeStyle = '#6f5982'
+        ctx.strokeStyle = '#e7ddd099'
         
         # Draw scene elements
         draw_grid(ctx, canvas)
@@ -262,9 +284,8 @@ def draw_scene(x, y):
         # Draw the projectile as a purple circle
         ctx.beginPath()
         ctx.arc(x * SCALE + MARGIN, canvas.height - (y * SCALE + MARGIN), 5, 0, 2 * math.pi)
-        ctx.fillStyle = '#6f5982'
+        ctx.fillStyle = '#fdbb5999'
         ctx.fill()
-        
     except Exception as e:
         console.log(f"Error in draw_scene: {str(e)}")
         display_error(f"Error drawing scene: {str(e)}")
@@ -329,9 +350,12 @@ def start_simulation(*args):
         if animation_id is not None:
             cancelAnimationFrame(animation_id)
         
-        # Start new animation
+        # Start new animation with a delay
         start_time = None
-        animation_id = requestAnimationFrame(create_proxy(animation_frame))
+        window.setTimeout(
+            create_proxy(lambda: requestAnimationFrame(create_proxy(animation_frame))),
+            ANIMATION_DELAY * 1000  # Delay in milliseconds
+        )
         
     except Exception as e:
         console.log(f"Error in start_simulation: {str(e)}")
@@ -346,7 +370,6 @@ def init():
         # Draw initial grid and rulers
         draw_grid(ctx, canvas)
         draw_rulers(ctx, canvas)
-        
     except Exception as e:
         console.log(f"Error in init: {str(e)}")
         display_error(f"Error initializing canvas: {str(e)}")

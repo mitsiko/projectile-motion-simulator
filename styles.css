@@ -1,6 +1,6 @@
  /* Main layout styles */
  body {
-    font-family: "montserrat";
+    font-family: "consolas";
     margin: 0px;
     background-color: #e7ddd0;
 }
@@ -16,35 +16,51 @@ p{
 .title {
     display: flex;
     justify-content: flex-end;
-    margin-top: 4rem;
-    padding-right: 18rem;
+    padding-right: 23%;
+    margin-top: 3rem;
     padding-top: 0rem;
     padding-bottom: 0rem;
     width: 100vp;
     height: 20vh;
     font-size: 1rem;
     font-family: "press start 2p";
+    text-shadow: 
+    -1px -1px 0 rgb(10, 10, 10),  /* Top left */
+    1px -1px 0 rgb(10, 10, 10),   /* Top right */
+    -1px 1px 0 rgb(10, 10, 10),   /* Bottom left */
+    1px 1px 0 rgb(10, 10, 10);    /* Bottom right */    
     text-align: left;
     background: linear-gradient(to bottom,#2a2e31, #856b9e, #e87651, #fdbb59);
     color:#e7ddd0;
     align-items: center;
+    border: 1.5px solid rgb(10, 10, 10);
 }
 
 .landing-page{
     display: flex;
     flex-direction: row;
-    margin: 0.5rem 6rem;
+    margin: 0.5rem 0rem;
+    margin-right: 23%;
+    margin-left: 6rem;
+    justify-content: space-between;
 }
 
 .right-section{
     flex-direction: column;
-    margin-left: 4rem;
     color: #392d43;
-    margin-right: 12rem;
+    width: 32rem;
 }
+
+.right-section h2{
+    margin-bottom: 0.5rem;
+    margin-top: 1rem;
+}
+
 
 .right-section p{
     text-align: justify;
+    margin-top: 0rem;
+    margin-bottom: 0.75rem;
 }
 
 .left-section img{
@@ -57,7 +73,7 @@ p{
 .input-section{
     display:flex;
     flex-direction: column;
-    padding-right: 5rem;
+    margin-top: 1.5rem;
 }
 
 .input-group {
@@ -69,37 +85,56 @@ p{
 }
 
 .input-group input {
+    outline:none;
     margin-top: 5px;
     padding: 5px;
-    width: 200px;
-    border: 1px solid #392d43;
+    width: 15rem;
+    border: 1px solid rgb(10, 10, 10);
     background-color: #e7ddd0;
     align-self: center;
+    border-radius: 0.3rem;
+    box-shadow: 4px 4px 0px #333; /* Solid offset shadow */
 }
 /* Canvas container styles */
 .canvas-container {
     display: flex;
     justify-content: center;
     margin-top: 20px;
-    border-top: 2px solid #866b9e;
+    margin-top: 4rem;
+    background-color: #a49d95;
+    background-color: #392d43;
+    padding-bottom: 2rem;
+    padding-top: 1rem;
+    border-top: 1.5px solid rgb(10, 10, 10);
 }
+
 canvas {
-    background-color: #e7ddd0;
-    max-width: 1216px;  
+    background-color: #392d43;
+    max-width: 1220px;  
 }
+
 /* Button styles */
 button {
-    margin: 0.8rem 4rem;
+    margin: 1.5rem 4rem;
     padding: 0.7rem 1.25rem;
     background-color: #866b9e;
     color: #e7ddd0;
-    border: none;
+    border: 1.5px solid rgb(10, 10, 10);
     cursor: pointer;
     font-family: "press start 2p";
+    text-shadow: 
+    -1px -1px 0 rgb(10, 10, 10),  /* Top left */
+    1px -1px 0 rgb(10, 10, 10),   /* Top right */
+    -1px 1px 0 rgb(10, 10, 10),   /* Bottom left */
+    1px 1px 0 rgb(10, 10, 10);    /* Bottom right */     
+    border-radius: 0.3rem;
 }
+
 button:hover {
     background-color: #eb8152;
+    box-shadow: 4px 4px 0px #333;   /* Slightly reduce shadow on hover */
 }
+
 /* Error message styles */
 #error-message {
     display: flex;
@@ -109,8 +144,15 @@ button:hover {
 }
 
 #footer{
-    background-color: #866b9e;
+    background: linear-gradient(to bottom,#e87651, #fdbb59);
     text-align: center;
     padding: 0.1rem;
-    color:#e7ddd0;
+    border-top: 1.5px solid rgb(10, 10, 10);
+    color: #e7ddd0; 
+    font-family: "press start 2p";
+    text-shadow: 
+    -1px -1px 0 rgb(10, 10, 10),  /* Top left */
+    1px -1px 0 rgb(10, 10, 10),   /* Top right */
+    -1px 1px 0 rgb(10, 10, 10),   /* Bottom left */
+    1px 1px 0 rgb(10, 10, 10);    /* Bottom right */ 
 }
