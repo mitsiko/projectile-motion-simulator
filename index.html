@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Projectile Motion Simulator</title>
+    <link rel="stylesheet" href="https://pyscript.net/latest/pyscript.css" />
+    <script defer src="https://pyscript.net/latest/pyscript.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f0f0f0;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .input-group {
+            margin: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        .input-group input {
+            margin-top: 5px;
+            padding: 5px;
+            width: 200px;
+        }
+        .canvas-container {
+            position: relative;
+            margin-top: 20px;
+        }
+        canvas {
+            border: 1px solid #ccc;
+            background-color: white;
+        }
+        button {
+            margin: 20px;
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        #error-message {
+            color: red;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Projectile Motion Simulator</h1>
+        <div class="input-group">
+            <label for="velocity">Initial Velocity (m/s):</label>
+            <input type="number" id="velocity" value="20" step="1" min="0">
+        </div>
+        <div class="input-group">
+            <label for="angle">Launch Angle (degrees):</label>
+            <input type="number" id="angle" value="45" step="1" min="0" max="90">
+        </div>
+        <button id="start-btn" py-click="start_simulation()">Start Simulation</button>
+        <div id="error-message"></div>
+        <div class="canvas-container">
+            <canvas id="simulation-canvas" width="1000" height="450"></canvas>
+        </div>
+    </div>
+
+    <py-script>
+import math
+from js import document, window, console
+from pyodide.ffi import create_proxy
+from js import requestAnimationFrame, cancelAnimationFrame
+
+# Global variables
+GRAVITY = 9.81
+SCALE = 10  # Pixels per meter
+MARGIN = 50  # Margin for rulers
+animation_id = None
+start_time = None
+trajectory_points = []  # Store trajectory points for drawing
+
+def display_error(message):
+    error_div = document.getElementById('error-message')
+    error_div.textContent = message
+
+def clear_error():
+    error_div = document.getElementById('error-message')
+    error_div.textContent = ""
+
+def get_canvas():
+    return document.getElementById('simulation-canvas')
+
+def get_inputs():
+    try:
+        velocity_input = document.getElementById('velocity')
+        angle_input = document.getElementById('angle')
+        
+        velocity = float(velocity_input.value)
+        angle = float(angle_input.value)
+        
+        if velocity < 0:
+            raise ValueError("Velocity must be positive")
+        if angle < 0 or angle > 90:
+            raise ValueError("Angle must be between 0 and 90 degrees")
+            
+        return velocity, angle
+    except ValueError as e:
+        display_error(str(e))
+        return None, None
+
+def calculate_position(t, v0, angle):
+    angle_rad = math.radians(angle)
+    x = v0 * math.cos(angle_rad) * t
+    y = v0 * math.sin(angle_rad) * t - 0.5 * GRAVITY * t * t
+    return x, y
+
+def draw_rulers(ctx, canvas):
+    ctx.beginPath()
+    ctx.moveTo(MARGIN, MARGIN)
+    ctx.lineTo(MARGIN, canvas.height - MARGIN)
+    ctx.stroke()
+    
+    ctx.beginPath()
+    ctx.moveTo(MARGIN, canvas.height - MARGIN)
+    ctx.lineTo(canvas.width - MARGIN, canvas.height - MARGIN)
+    ctx.stroke()
+    
+    ctx.font = '12px Arial'
+    ctx.textAlign = 'right'
+    ctx.textBaseline = 'middle'
+    
+    height_meters = (canvas.height - 2 * MARGIN) / SCALE
+    for i in range(0, int(height_meters) + 1, 5):
+        y_pos = canvas.height - MARGIN - (i * SCALE)
+        ctx.beginPath()
+        ctx.moveTo(MARGIN - 5, y_pos)
+        ctx.lineTo(MARGIN, y_pos)
+        ctx.stroke()
+        ctx.fillText(f"{i}m", MARGIN - 8, y_pos)
+    
+    ctx.textAlign = 'center'
+    ctx.textBaseline = 'top'
+    
+    width_meters = (canvas.width - 2 * MARGIN) / SCALE
+    for i in range(0, int(width_meters) + 1, 10):
+        x_pos = MARGIN + (i * SCALE)
+        ctx.beginPath()
+        ctx.moveTo(x_pos, canvas.height - MARGIN)
+        ctx.lineTo(x_pos, canvas.height - MARGIN + 5)
+        ctx.stroke()
+        ctx.fillText(f"{i}m", x_pos, canvas.height - MARGIN + 8)
+
+def draw_grid(ctx, canvas):
+    ctx.strokeStyle = '#e0e0e0'
+    ctx.lineWidth = 0.5
+    
+    width_meters = (canvas.width - 2 * MARGIN) / SCALE
+    for i in range(0, int(width_meters) + 1, 5):
+        x_pos = MARGIN + (i * SCALE)
+        ctx.beginPath()
+        ctx.moveTo(x_pos, MARGIN)
+        ctx.lineTo(x_pos, canvas.height - MARGIN)
+        ctx.stroke()
+    
+    height_meters = (canvas.height - 2 * MARGIN) / SCALE
+    for i in range(0, int(height_meters) + 1, 5):
+        y_pos = canvas.height - MARGIN - (i * SCALE)
+        ctx.beginPath()
+        ctx.moveTo(MARGIN, y_pos)
+        ctx.lineTo(canvas.width - MARGIN, y_pos)
+        ctx.stroke()
+
+def draw_trajectory():
+    canvas = get_canvas()
+    ctx = canvas.getContext('2d')
+    
+    ctx.beginPath()
+    ctx.strokeStyle = '#ff000066'  # Semi-transparent red
+    ctx.lineWidth = 2
+    
+    for i, point in enumerate(trajectory_points):
+        if i == 0:
+            ctx.moveTo(point[0] * SCALE + MARGIN, canvas.height - (point[1] * SCALE + MARGIN))
+        else:
+            ctx.lineTo(point[0] * SCALE + MARGIN, canvas.height - (point[1] * SCALE + MARGIN))
+    
+    ctx.stroke()
+
+def draw_scene(x, y):
+    try:
+        canvas = get_canvas()
+        ctx = canvas.getContext('2d')
+        
+        # Clear canvas
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        
+        # Set line width for rulers and grid
+        ctx.lineWidth = 1
+        ctx.strokeStyle = '#000000'
+        
+        # Draw grid first
+        draw_grid(ctx, canvas)
+        
+        # Draw rulers
+        draw_rulers(ctx, canvas)
+        
+        # Draw trajectory
+        draw_trajectory()
+        
+        # Draw projectile
+        ctx.beginPath()
+        ctx.arc(x * SCALE + MARGIN, canvas.height - (y * SCALE + MARGIN), 5, 0, 2 * math.pi)
+        ctx.fillStyle = 'red'
+        ctx.fill()
+        
+    except Exception as e:
+        console.log(f"Error in draw_scene: {str(e)}")
+        display_error(f"Error drawing scene: {str(e)}")
+
+def animation_frame(timestamp):
+    global start_time, animation_id, trajectory_points
+    
+    try:
+        if start_time is None:
+            start_time = timestamp
+        
+        elapsed_time = (timestamp - start_time) / 1000  # Convert to seconds
+        v0, angle = get_inputs()
+        
+        if v0 is None or angle is None:
+            return
+        
+        x, y = calculate_position(elapsed_time, v0, angle)
+        canvas = get_canvas()
+        
+        # Add point to trajectory
+        trajectory_points.append((x, y))
+        
+        # Check if projectile has hit the ground or gone out of bounds
+        if y < 0 or x * SCALE > (canvas.width - 2 * MARGIN):
+            cancelAnimationFrame(animation_id)
+            start_time = None
+            # Draw final scene
+            draw_scene(x, max(y, 0))
+            return
+        
+        draw_scene(x, y)
+        animation_id = requestAnimationFrame(create_proxy(animation_frame))
+        
+    except Exception as e:
+        console.log(f"Error in animation_frame: {str(e)}")
+        display_error(f"Animation error: {str(e)}")
+
+def start_simulation(*args):
+    global start_time, animation_id, trajectory_points
+    
+    try:
+        clear_error()
+        v0, angle = get_inputs()
+        
+        if v0 is None or angle is None:
+            return
+            
+        # Reset trajectory points
+        trajectory_points = []
+            
+        # Cancel any existing animation
+        if animation_id is not None:
+            cancelAnimationFrame(animation_id)
+        
+        start_time = None
+        animation_id = requestAnimationFrame(create_proxy(animation_frame))
+        
+    except Exception as e:
+        console.log(f"Error in start_simulation: {str(e)}")
+        display_error(f"Error starting simulation: {str(e)}")
+
+# Initialize canvas
+def init():
+    try:
+        canvas = get_canvas()
+        ctx = canvas.getContext('2d')
+        
+        # Draw initial grid and rulers
+        draw_grid(ctx, canvas)
+        draw_rulers(ctx, canvas)
+        
+    except Exception as e:
+        console.log(f"Error in init: {str(e)}")
+        display_error(f"Error initializing canvas: {str(e)}")
+
+init()
+    </py-script>
+</body>
+</html>
